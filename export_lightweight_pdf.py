@@ -5,6 +5,7 @@
 
 import io
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -167,6 +168,114 @@ class ExportLightweightPDF(inkex.EffectExtension):
             help="Show summary report upon completion",
         )
 
+    def resolve_document_name_and_dir(
+        self, input_file: str | None = None
+    ) -> tuple[str, str]:
+        """Resolve the original document name and directory.
+
+        Priority:
+        1. sodipodi:docname attribute on the SVG root element (strip .svg, basename only).
+        2. input_file basename if it does not match ^ink_ext_.
+        3. Fallback "Untitled".
+
+        Output directory default:
+        - If sodipodi:docname has a directory, use it if it exists.
+        - If sodipodi:docname is a bare name or missing, use input_file's directory (if it exists) or home.
+        - Never write into the temp directory (tempfile.gettempdir()): fall back to home.
+        """
+        if input_file is None:
+            input_file = getattr(self.options, "input_file", None)
+
+        home_dir = os.path.expanduser("~")
+        temp_dir = tempfile.gettempdir()
+
+        raw_docname = None
+        root = (
+            self.document.getroot()
+            if hasattr(self, "document") and self.document is not None
+            else None
+        )
+
+        if root is not None:
+            if hasattr(inkex, "addNS"):
+                try:
+                    raw_docname = root.get(inkex.addNS("docname", "sodipodi"))
+                except Exception:
+                    raw_docname = None
+            if not raw_docname:
+                raw_docname = root.get(
+                    "{http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd}docname"
+                )
+            if not raw_docname:
+                raw_docname = root.get("sodipodi:docname")
+            if not raw_docname and hasattr(root, "attrib"):
+                for key, val in root.attrib.items():
+                    if key.endswith("}docname") or key == "sodipodi:docname":
+                        raw_docname = val
+                        break
+
+        # Priority (1): sodipodi:docname attribute on self.document.getroot()
+        doc_name = None
+        if raw_docname:
+            raw_str = str(raw_docname).strip()
+            norm_name = raw_str.replace("\\", "/")
+            base = os.path.basename(norm_name)
+            if base.lower().endswith(".svg"):
+                base = base[:-4]
+            sanitized = base.replace("/", "").replace("\\", "").strip()
+            if sanitized:
+                doc_name = sanitized
+
+        # Priority (2): if input_file basename does not match ^ink_ext_ then use it
+        if not doc_name and input_file:
+            norm_input = str(input_file).replace("\\", "/")
+            inp_base = os.path.basename(norm_input)
+            if not re.match(r"^ink_ext_", inp_base):
+                if inp_base.lower().endswith(".svg"):
+                    cand = inp_base[:-4]
+                else:
+                    cand = os.path.splitext(inp_base)[0]
+                sanitized = cand.replace("/", "").replace("\\", "").strip()
+                if sanitized:
+                    doc_name = sanitized
+
+        # Priority (3): fallback "Untitled"
+        if not doc_name:
+            doc_name = "Untitled"
+
+        # Resolve output dir default
+        doc_dir = None
+        if raw_docname:
+            norm_docname = str(raw_docname).strip().replace("\\", "/")
+            docname_dir = os.path.dirname(norm_docname)
+            if docname_dir and os.path.isdir(docname_dir):
+                doc_dir = os.path.abspath(docname_dir)
+
+        if not doc_dir:
+            if input_file and os.path.isfile(input_file):
+                doc_dir = os.path.dirname(os.path.abspath(input_file))
+            else:
+                doc_dir = home_dir
+
+        def is_temp_dir(path: str) -> bool:
+            try:
+                norm_p = os.path.normcase(os.path.abspath(path))
+                norm_t = os.path.normcase(os.path.abspath(temp_dir))
+                if norm_p == norm_t:
+                    return True
+                if os.path.normcase(os.path.realpath(path)) == os.path.normcase(
+                    os.path.realpath(temp_dir)
+                ):
+                    return True
+            except OSError:
+                pass
+            return False
+
+        if is_temp_dir(doc_dir) or not os.path.isdir(doc_dir):
+            doc_dir = home_dir
+
+        return doc_name, doc_dir
+
     def effect(self):
         # 1. Determine input document path
         doc_path = self.options.input_file
@@ -185,8 +294,7 @@ class ExportLightweightPDF(inkex.EffectExtension):
             doc_name = "Untitled"
             doc_dir = os.path.expanduser("~")
         else:
-            doc_dir = os.path.dirname(os.path.abspath(doc_path))
-            doc_name = os.path.splitext(os.path.basename(doc_path))[0]
+            doc_name, doc_dir = self.resolve_document_name_and_dir(doc_path)
 
         try:
             # 2. Determine target output path
