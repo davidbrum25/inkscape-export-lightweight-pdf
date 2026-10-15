@@ -1,38 +1,24 @@
 # Export Lightweight PDF
 
-An Inkscape extension that exports optimized, lightweight PDF documents with customizable image resolution and presets, reducing bloated file sizes by up to 95%.
+An Inkscape extension that exports a lightweight PDF with the embedded images downsampled to the resolution you choose.
 
-When exporting SVG documents containing high-resolution photos, renders, or storyboard panels, Inkscape often produces massive PDF files (e.g., 50–100+ MB) because Cairo embeds raster images with little or no lossy compression. This extension automates exporting to PDF while downsampling and recompressing embedded and linked images to your chosen target resolution, while preserving 100% of your vector graphics, text, fonts, and layout.
+When a document holds high-resolution photos, renders, or storyboard panels, Inkscape often writes a PDF of 50 to 100 MB or more, because Cairo embeds the raster images with little or no lossy compression. This extension exports the PDF and recompresses those images to your target resolution. Vector paths, text, fonts, and layout stay untouched. Typical savings reach 95%.
 
----
+![The same document as a PDF: original size next to the compressed size](media/001_original-size.webp)
 
-## Features
-
-- **One-Click Presets:**
-  - **SD (50% scale / ~75 DPI)**: Recommended for storyboards, review decks, and client feedback (reduces 90MB files to ~3–4MB).
-  - **Screen (~96 DPI)**: Balanced for web viewing, email attachments, and digital presentations.
-  - **Draft (25% scale / ~50 DPI)**: Ultra-compact output for instant chat or mobile sharing.
-  - **HD (75% scale / ~150 DPI)**: High-definition digital viewing.
-  - **Print (100% scale / ~300 DPI)**: Clean stream compression at full resolution.
-- **Custom Scale & DPI:** Set any percentage (e.g., 50%) or exact DPI value.
-- **Smart Transparency Handling:** Automatically splits transparent images into RGB JPEG + synchronized Alpha mask streams (`/SMask`), dramatically slashing file sizes without clipping artifacts.
-- **Vector & Text Integrity:** Vector paths, outlines, strokes, and editable fonts remain completely untouched and pixel-perfect.
-- **Single & Multi-Page Support:** Seamlessly supports multi-page Inkscape documents, single pages, bounding boxes, or selection exports.
-
----
+![The compressed export, a fraction of the original file size](media/002_compress-size.webp)
 
 ## Install
 
-Inkscape 1.2 or newer (developed and tested on Inkscape 1.4).
+Inkscape 1.2 or newer. Developed and tested on 1.4.
 
-Requires **Ghostscript** (`gs`) installed on your system:
-- **Arch Linux / Manjaro:** `sudo pacman -S ghostscript`
-- **Ubuntu / Debian:** `sudo apt install ghostscript`
-- **Fedora:** `sudo dnf install ghostscript`
-- **macOS:** `brew install ghostscript`
-- **Windows:** Download the Ghostscript AGPL installer from [ghostscript.com](https://ghostscript.com/releases/).
+It needs Ghostscript (`gs`):
 
-### Clone or Copy Extension
+- Arch Linux / Manjaro: `sudo pacman -S ghostscript`
+- Ubuntu / Debian: `sudo apt install ghostscript`
+- Fedora: `sudo dnf install ghostscript`
+- macOS: `brew install ghostscript`
+- Windows: the AGPL installer from [ghostscript.com](https://ghostscript.com/releases/)
 
 ```bash
 mkdir -p ~/.config/inkscape/extensions
@@ -40,59 +26,65 @@ git clone https://github.com/davidbrum25/inkscape-export-lightweight-pdf.git \
   ~/.config/inkscape/extensions/export-lightweight-pdf
 ```
 
-Restart Inkscape. The command is located under **Extensions → Export → Export Lightweight PDF...**
+Restart Inkscape. The command is **Extensions → Export → Export Lightweight PDF**.
 
-*(On Windows, the extensions folder is `%APPDATA%\inkscape\extensions`).*
+On Windows the extensions folder is `%APPDATA%\inkscape\extensions`.
 
----
+## Use
 
-## How to Use
+1. Open your SVG document.
+2. Open **Extensions → Export → Export Lightweight PDF**.
+3. Pick a resolution preset and the JPEG quality. Leave the output folder empty to save next to the SVG.
+4. Apply. A report shows the size before and after, and the percentage saved.
 
-1. Open your SVG document in Inkscape.
-2. Go to **Extensions → Export → Export Lightweight PDF...**
-3. Select your desired resolution preset (e.g. **SD — 50% Scale / ~75 DPI**) and JPEG quality.
-4. Set your output folder or leave it empty to save in the same directory as your SVG.
-5. Click **Apply**.
-6. A summary report appears with the before/after file size and exact percentage saved.
+![The extension in the Extensions, Export menu](media/003_menu.webp)
 
----
+![The Resolution tab: preset, custom scale and DPI, JPEG quality, downsampling trigger, and transparency handling](media/004_popup_options_01.webp)
+
+![The Output and Scope tab: output folder, filename suffix, export area, text to paths, and PDF version](media/004_popup_options_02.webp)
+
+![The Advanced tab: optimizer engine, stream compression, and what to open after the export](media/004_popup_options_03.webp)
+
+A short screen recording of the whole flow:
+
+![Screen recording of an export from start to finish](media/screen_sample.gif)
+
+The same recording as a smaller video file: [screen_sample.webm](media/screen_sample.webm).
 
 ## Options
 
-### Resolution Tab
+### Resolution
 
-| Option | Description |
+| Option | What it does |
 | --- | --- |
-| **Resolution preset** | Quick presets: SD (50%), Screen (96 DPI), Draft (25%), HD (150 DPI), Print (300 DPI), or Custom. |
-| **Custom scale (%)** | Percentage scale applied when preset is set to Custom percentage scale. |
-| **Custom target DPI** | DPI value applied when preset is set to Custom target DPI. |
-| **JPEG image quality (%)** | Compression quality for photos and bitmaps (default `85%` offers optimal fidelity/size). |
-| **Downsampling trigger** | Choose whether to downsample all images above target resolution or only those exceeding 1.5x. |
-| **Compress transparent images as JPEG + Alpha mask** | Enabled by default. Separates RGB channels and alpha masks to maximize compression while retaining clean transparency. |
+| Resolution preset | SD (50%, about 75 DPI), Screen (96 DPI), Draft (25%, about 50 DPI), HD (75%, about 150 DPI), Print (300 DPI), or a custom value. |
+| Custom scale (%) | Percentage applied when the preset is custom scale. |
+| Custom target DPI | DPI applied when the preset is custom DPI. |
+| JPEG image quality (%) | Compression quality for photos and bitmaps. The default is 85. |
+| Downsampling trigger | Downsample every image above the target resolution, or only those above 1.5 times it. |
+| Compress transparent images as JPEG + Alpha mask | On by default. Splits transparent images into an RGB JPEG and an alpha mask (`/SMask`), so transparency stays clean and the file stays small. |
 
-### Output & Scope Tab
+### Output and scope
 
-| Option | Description |
+| Option | What it does |
 | --- | --- |
-| **Output folder** | Destination directory for the PDF. Defaults to current SVG directory. |
-| **Filename suffix** | Suffix added before `.pdf` (default: `_SD`). |
-| **Overwrite existing file** | Overwrite if file exists, or auto-append incremental counters (`_1`, `_2`). |
-| **Export area** | Current page / artboard, all pages (multi-page PDF), whole drawing area, or selected objects. |
-| **Convert text to paths** | Outlines all text into vector curves so no fonts need to be installed on target devices. |
-| **Filter rasterization DPI** | DPI used by Inkscape when rasterizing blur and filter effects (default `96`). |
-| **PDF version** | Target PDF standard: 1.4, 1.5 (default), 1.6, or 1.7. |
+| Output folder | Where the PDF is saved. If empty, the SVG folder is used. |
+| Filename suffix | Added before `.pdf`. The default is `_SD`. |
+| Overwrite existing file | Replaces a file with the same name. Off, a counter (`_1`, `_2`) is added. |
+| Export area | Current page, all pages (multi-page PDF), the whole drawing, or the selected objects. |
+| Convert text to paths | Outlines all text, so no fonts need to be installed where the PDF is opened. |
+| Filter rasterization DPI | DPI used when Inkscape rasterizes blur and filter effects. The default is 96. |
+| PDF version | 1.4, 1.5 (default), 1.6, or 1.7. |
 
-### Advanced Tab
+### Advanced
 
-| Option | Description |
+| Option | What it does |
 | --- | --- |
-| **Optimizer engine** | Auto (recommended), Ghostscript, or PikePDF (if installed). |
-| **Compress PDF object streams** | Flate-compresses cross-reference tables and streams for minimal footprint. |
-| **Open PDF file after export** | Automatically opens the exported PDF in the system viewer. |
-| **Reveal in file manager after export** | Opens the destination directory in your file manager. |
-| **Show detailed compression report** | Displays the before/after size and percentage saved. |
-
----
+| Optimizer engine | Auto (recommended), Ghostscript, or PikePDF if installed. |
+| Compress PDF object streams | Flate-compresses cross-reference tables and streams. |
+| Open PDF file after export | Opens the PDF in the system viewer. |
+| Reveal in file manager after export | Opens the destination folder. |
+| Show detailed compression report | Shows the size before and after, and the percentage saved. |
 
 ## License
 
