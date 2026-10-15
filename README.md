@@ -34,7 +34,7 @@ On Windows the extensions folder is `%APPDATA%\inkscape\extensions`.
 
 1. Open your SVG document.
 2. Open **Extensions → Export → Export Lightweight PDF**.
-3. Pick a resolution preset and the JPEG quality. Leave the output folder empty to save next to the SVG.
+3. Pick a resolution preset and the JPEG quality. Leave the output folder empty to save in your home folder.
 4. Apply. A report shows the size before and after, and the percentage saved.
 
 ![The extension in the Extensions, Export menu](media/003_menu.webp)
@@ -68,7 +68,7 @@ The same recording as a smaller video file: [screen_sample.webm](media/screen_sa
 
 | Option | What it does |
 | --- | --- |
-| Output folder | Where the PDF is saved. If empty, the SVG folder is used. |
+| Output folder | Where the PDF is saved. If empty, your home folder is used. |
 | Filename suffix | Added before `.pdf`. The default is `_SD`. |
 | Overwrite existing file | Replaces a file with the same name. Off, a counter (`_1`, `_2`) is added. |
 | Export area | Current page, all pages (multi-page PDF), the whole drawing, or the selected objects. |
