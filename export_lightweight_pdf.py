@@ -702,10 +702,18 @@ class ExportLightweightPDF(inkex.EffectExtension):
         try:
             if sys.platform == "win32":
                 os.startfile(target_path)
-            elif sys.platform == "darwin":
-                subprocess.Popen(["open", target_path])
             else:
-                subprocess.Popen(["xdg-open", target_path])
+                # Launch through a shell that backgrounds the opener and exits,
+                # so no child process is left unreaped (a bare Popen that is never
+                # waited on makes Inkscape show a ResourceWarning dialog).
+                opener = "open" if sys.platform == "darwin" else "xdg-open"
+                subprocess.run(
+                    ["sh", "-c", '"$0" "$1" >/dev/null 2>&1 &', opener, target_path],
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    check=False,
+                )
         except Exception:
             pass
 
