@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+  <name>Export Lightweight PDF</name>
+  <id>org.davidbrum.export_lightweight_pdf</id>
+
+  <param name="tabs" type="notebook">
+    <!-- TAB 1: RESOLUTION & PRESETS -->
+    <page name="tab_resolution" gui-text="Resolution">
+      <label appearance="header">Resolution &amp; Quality</label>
+      <label>Export optimized, lightweight PDFs by downsampling embedded and linked images.</label>
+      <separator/>
+
+      <param name="preset" type="optiongroup" appearance="combo" gui-text="Resolution preset"
+             gui-description="Quick preset or select custom scale / DPI.">
+        <option value="sd_50">SD — 50% Scale / ~75 DPI (Recommended: storyboards, reviews, drafts)</option>
+        <option value="screen_96">Screen — ~96 DPI (Web, email &amp; digital presentations)</option>
+        <option value="draft_25">Draft — 25% Scale / ~50 DPI (Ultra-lightweight / chat sharing)</option>
+        <option value="hd_150">HD — 75% Scale / ~150 DPI (High-definition digital viewing)</option>
+        <option value="print_300">Print — 100% Scale / ~300 DPI (High-resolution print)</option>
+        <option value="custom_scale">Custom percentage scale (slider below)</option>
+        <option value="custom_dpi">Custom target DPI (field below)</option>
+      </param>
+
+      <param name="custom_scale" type="int" min="5" max="100" appearance="full" gui-text="Custom scale (%)"
+             gui-description="Percentage scale applied to images when preset is set to Custom percentage scale.">50</param>
+
+      <param name="custom_dpi" type="int" min="30" max="600" gui-text="Custom target DPI"
+             gui-description="DPI applied to images when preset is set to Custom target DPI.">75</param>
+
+      <separator/>
+
+      <param name="jpeg_quality" type="int" min="30" max="100" appearance="full" gui-text="JPEG image quality (%)"
+             gui-description="JPEG compression quality for images. 85 is the recommended visual balance.">85</param>
+
+      <param name="downsample_threshold" type="optiongroup" appearance="combo" gui-text="Downsampling trigger"
+             gui-description="Criteria for downsampling images.">
+        <option value="all">Downsample all images above target resolution (Recommended)</option>
+        <option value="significant">Only downsample if image resolution is &gt; 1.5x target</option>
+      </param>
+
+      <param name="optimize_alpha" type="bool" gui-text="Compress transparent images as JPEG + Alpha mask"
+             gui-description="Drastically reduces size of transparent images while keeping perfect cutouts.">true</param>
+    </page>
+
+    <!-- TAB 2: EXPORT SETTINGS -->
+    <page name="tab_export" gui-text="Output &amp; Scope">
+      <label appearance="header">Destination &amp; Layout</label>
+      <separator/>
+
+      <param name="output_dir" type="path" mode="folder" gui-text="Output folder"
+             gui-description="Folder where the PDF will be saved. If left empty, the current SVG document folder is used."></param>
+
+      <param name="filename_suffix" type="string" gui-text="Filename suffix"
+             gui-description="Suffix added before .pdf (e.g., _SD produces document_SD.pdf).">_SD</param>
+
+      <param name="overwrite" type="bool" gui-text="Overwrite existing file if it already exists"
+             gui-description="If unchecked and the file exists, an incremental counter (_1, _2) is appended.">true</param>
+
+      <separator/>
+
+      <param name="export_area" type="optiongroup" appearance="combo" gui-text="Export area"
+             gui-description="Which part of the SVG document to include in the exported PDF.">
+        <option value="page">Current page / artboard</option>
+        <option value="all_pages">All pages (Multi-page PDF)</option>
+        <option value="drawing">Whole drawing area (bounding box of all objects)</option>
+        <option value="selection">Selected objects only</option>
+      </param>
+
+      <param name="text_to_path" type="bool" gui-text="Convert text to paths (outline fonts)"
+             gui-description="Convert text into vector paths so viewing does not require installed fonts.">false</param>
+
+      <param name="rasterize_dpi" type="int" min="50" max="600" gui-text="Filter rasterization DPI"
+             gui-description="DPI used by Inkscape to render blur, drop-shadows, and SVG filter effects.">96</param>
+
+      <param name="pdf_version" type="optiongroup" appearance="combo" gui-text="PDF version"
+             gui-description="Target PDF version standard.">
+        <option value="1.5">PDF 1.5 (Acrobat 6, standard)</option>
+        <option value="1.4">PDF 1.4 (Acrobat 5)</option>
+        <option value="1.6">PDF 1.6 (Acrobat 7)</option>
+        <option value="1.7">PDF 1.7 (Acrobat 8+)</option>
+      </param>
+    </page>
+
+    <!-- TAB 3: ADVANCED & ACTIONS -->
+    <page name="tab_advanced" gui-text="Advanced">
+      <label appearance="header">Optimization Engine &amp; Post-Actions</label>
+      <separator/>
+
+      <param name="engine" type="optiongroup" appearance="combo" gui-text="Optimizer engine"
+             gui-description="Engine used to compress and downsample PDF images.">
+        <option value="auto">Auto (Ghostscript if available, PikePDF/PyMuPDF or fallback)</option>
+        <option value="gs">Ghostscript (Fastest DPI downsampling &amp; stream compression)</option>
+        <option value="pikepdf">PikePDF (Direct object-level stream optimizer if installed)</option>
+        <option value="svg_prescale">Pre-scale images in SVG before PDF export (Pillow fallback)</option>
+      </param>
+
+      <param name="deflate_streams" type="bool" gui-text="Compress PDF object streams (compact size)"
+             gui-description="Compress cross-reference tables and object streams.">true</param>
+
+      <separator/>
+
+      <param name="open_after" type="bool" gui-text="Open PDF file after export"
+             gui-description="Open the generated PDF in your default PDF reader.">false</param>
+
+      <param name="reveal_file" type="bool" gui-text="Reveal in file manager after export"
+             gui-description="Open the folder containing the generated PDF in your file manager.">false</param>
+
+      <param name="show_report" type="bool" gui-text="Show detailed compression report dialog"
+             gui-description="Display before/after file sizes and percentage saved upon completion.">true</param>
+    </page>
+
+    <!-- TAB 4: ABOUT -->
+    <page name="tab_about" gui-text="About">
+      <label appearance="header">Export Lightweight PDF</label>
+      <label>Version 1.0.0</label>
+      <separator/>
+      <label xml:space="preserve">Created by David Brum.
+
+This extension solves the common issue where exporting SVG documents with embedded or linked images produces bloated, oversized PDFs.
+
+Key Features:
+• One-click resolution presets (SD, Draft, Screen, HD, Print).
+• Custom scale percentage or custom DPI.
+• Massive file size reduction (often 90–96% lighter).
+• Preserves crisp vector lines, text, fonts, and layout.
+• Transparent images handled cleanly with synchronized alpha masks.
+• Works with single-page and multi-page documents.
+
+License: GPL-2.0-or-later.
+Repository: https://github.com/davidbrum25/inkscape-export-lightweight-pdf</label>
+    </page>
+  </param>
+
+  <effect needs-live-preview="false">
+    <object-type>all</object-type>
+    <effects-menu>
+      <submenu name="Export"/>
+    </effects-menu>
+  </effect>
+
+  <script>
+    <command location="inx" interpreter="python">export_lightweight_pdf.py</command>
+  </script>
+</inkscape-extension>
