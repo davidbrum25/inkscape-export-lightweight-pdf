@@ -415,6 +415,25 @@ class ExportLightweightPDF(inkex.EffectExtension):
                 except OSError:
                     pass
 
+    def current_page_index(self) -> int | None:
+        """Return the 1-based index of the active page, or None if unknown.
+
+        Inkscape 1.2+ stores the active page id in the namedview attribute
+        ``inkscape:current-page``; pages are ``inkscape:page`` elements.
+        Returns None for documents without explicit pages.
+        """
+        try:
+            pages = self.svg.xpath("//inkscape:page")
+            if not pages:
+                return None
+            current = self.svg.namedview.get("inkscape:current-page")
+            for idx, page in enumerate(pages, start=1):
+                if current and page.get("id") == current:
+                    return idx
+            return 1
+        except Exception:
+            return None
+
     def export_inkscape_pdf(self, input_svg: str, output_pdf: str):
         """Invoke Inkscape CLI to export the SVG to a PDF file."""
         cmd = [
@@ -431,8 +450,14 @@ class ExportLightweightPDF(inkex.EffectExtension):
             cmd.append("--export-area-drawing")
         elif area == "page":
             cmd.append("--export-area-page")
+            # Inkscape 1.2+ exports every page unless one is requested.
+            page_idx = self.current_page_index()
+            if page_idx is not None:
+                cmd.append(f"--export-page={page_idx}")
         elif area == "all_pages":
-            cmd.extend(["--export-area-page", "--export-page=all"])
+            # Omitting --export-page exports all pages (1.4 treats "all" as
+            # a single page); single-page and older versions are unaffected.
+            cmd.append("--export-area-page")
         elif area == "selection":
             # If objects are selected, export selection
             if self.svg.selected:
